@@ -17,8 +17,11 @@ passportSetup(passport);
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow frontend to access
-  credentials: true
+  origin: [
+    'http://localhost:3000',
+    'https://agclothingstore.netlify.app' 
+  ],
+    credentials: true
 }));
 
 app.use(express.json());
