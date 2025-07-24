@@ -9,6 +9,9 @@
     "data:import": "node seeder.js",
     "data:destroy": "node seeder.js -d"
   },
+  "engines": {
+    "node": "18.x"
+  },
   "type": "module",
   "keywords": [],
   "author": "",
