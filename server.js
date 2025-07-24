@@ -16,14 +16,15 @@ passportSetup(passport);
 
 const app = express();
 
-app.use(cors({
+const corsOptions = {
   origin: [
-    'http://localhost:3000',
-    'https://agclothingstore.netlify.app' 
+      'http://localhost:3000',
+      'https://agclothingstore.netlify.app'
   ],
-    credentials: true
-}));
+  credentials: true,
+};
 app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
