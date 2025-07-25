@@ -1,49 +1,59 @@
-import path from 'path';
-import express from 'express';
-import cookieParser from 'cookie-parser';
-import passport from 'passport';
-import cors from 'cors';
-import passportSetup from './config/passport-setup.js';
-import productRoutes from './routes/productRoutes.js';
-import userRoutes from './routes/userRoutes.js';
-import dotenv from 'dotenv';
-import connectDB from './config/db.js'
-import orderRoutes from './routes/orderRoutes.js'; 
+import path from "path";
+import express from "express";
+import cookieParser from "cookie-parser";
+import passport from "passport";
+import cors from "cors";
+import passportSetup from "./config/passport-setup.js";
+import productRoutes from "./routes/productRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import dotenv from "dotenv";
+import connectDB from "./config/db.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 dotenv.config();
-connectDB();
-passportSetup(passport);
+const startServer = async () => {
+  try {
+    await connectDB();
 
-const app = express();
+    const app = express();
+    passportSetup(passport);
+    app.set("trust proxy", 1);
 
-app.use(cors({
-  origin: 'https://agclothingstore.netlify.app', // Your exact frontend URL
-  credentials: true // This is essential for sending cookies
-}));
+    app.use(
+      cors({
+        origin: "https://agclothingstore.netlify.app", 
+        credentials: true, 
+      })
+    );
 
-// 2. Add a proxy trust setting (important for Render/Heroku deployments)
-app.set('trust proxy', 1);
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+    app.use(cookieParser());
+    app.use(passport.initialize());
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+    // API Routes
+    app.use("/api/products", productRoutes);
+    app.use("/api/users", userRoutes);
+    app.use("/api/orders", orderRoutes);
 
-// Passport middleware
-app.use(passport.initialize());
+    // Make uploads folder static
+    const __dirname = path.resolve();
+    app.use(
+      "/uploads",
+      express.static(path.join(__dirname, "/backend/uploads"))
+    );
 
-// API Routes
-app.use('/api/products', productRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/orders', orderRoutes); 
+    app.get("/", (req, res) => {
+      res.send("AG-Store API is running...");
+    });
 
-// Make uploads folder static
-const __dirname = path.resolve();
-app.use('/uploads', express.static(path.join(__dirname, '/backend/uploads')));
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
 
-app.get('/', (req, res) => {
-  res.send('AG-Store API is running...');
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+startServer();
