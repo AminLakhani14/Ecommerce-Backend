@@ -5,48 +5,48 @@ import generateToken from '../utils/generateToken.js';
 const authUser = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-  if (user && user.password && (await user.matchPassword(password))) {
-    generateToken(res, user._id);
-    res.json({ _id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin });
+
+  if (user && (await user.matchPassword(password))) {
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      token: generateToken(user._id), // <-- RETURN TOKEN HERE
+    });
   } else {
-    res.status(401).send('Invalid email or password');
+    res.status(401).json({ message: 'Invalid email or password' });
   }
 };
 
-// Standard email/password registration
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
   const userExists = await User.findOne({ email });
-  if (userExists) return res.status(400).send('User already exists');
+
+  if (userExists) {
+    return res.status(400).json({ message: 'User already exists' });
+  }
 
   const user = await User.create({ name, email, password });
+
   if (user) {
-    generateToken(res, user._id);
-    res.status(201).json({ _id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin });
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      token: generateToken(user._id), // <-- RETURN TOKEN HERE
+    });
   } else {
-    res.status(400).send('Invalid user data');
+    res.status(400).json({ message: 'Invalid user data' });
   }
 };
 
 // Logout
 const logoutUser = (req, res) => {
-  try {
-    // Set the 'jwt' cookie to an empty string and set its maxAge to 0 
-    // to instruct the browser to delete it immediately.
-    res.cookie('jwt', '', {
-      httpOnly: true,
-      expires: new Date(0),
-    });
-    
-    // Send a success response.
-    res.status(200).json({ message: 'Logged out successfully' });
-
-  } catch (error) {
-    // If for any reason it fails, log the error and send a server error response.
-    console.error('Error during logout:', error);
-    res.status(500).json({ message: 'Server error during logout' });
-  }
+  res.status(200).json({ message: 'Logout successful' });
 };
+
 
 const getUserProfile = async (req, res) => {
   const user = await User.findById(req.user._id);
