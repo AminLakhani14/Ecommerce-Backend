@@ -8,27 +8,26 @@ import {
   deleteProduct,
   getHomepageProducts,
   getProductsByCategory,
-  getProductsBySubCategory, 
-  getProductsByFilter,
   getSaleProducts,
+  getProductsByFilter,
 } from '../controllers/productController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 
-router.route('/')
-  .get(getProducts)
-  .post(protect, admin, upload.array('gallery', 6), createProduct);
-
+// Public routes
+router.route('/').get(getProducts);
 router.get('/homepage', getHomepageProducts);
 router.get('/sale', getSaleProducts);
-router.get('/filter/:category/:subCategory', getProductsByFilter);
-router.get('/subcategory/:subCategoryName', getProductsBySubCategory);
 router.get('/category/:categoryName', getProductsByCategory);
+router.get('/filter/:category/:subCategory', getProductsByFilter);
+router.route('/:id').get(getProductById);
 
-// This is the crucial section
+// --- START: THE FINAL FIX ---
+// ADMIN ROUTES (These ONLY need the 'admin' middleware)
+router.route('/').post(admin, upload.array('gallery', 6), createProduct); // REMOVED 'protect'
 router.route('/:id')
-  .get(getProductById)
-  .put(protect, admin, updateProduct)
-  .delete(protect, admin, deleteProduct);
+  .put(admin, updateProduct) // REMOVED 'protect'
+  .delete(admin, deleteProduct); // REMOVED 'protect'
+// --- END: THE FINAL FIX ---
 
 export default router;
