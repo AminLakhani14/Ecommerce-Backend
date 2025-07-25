@@ -16,14 +16,14 @@ passportSetup(passport);
 
 const app = express();
 
-const corsOptions = {
-  origin: [
-      'http://localhost:3000',
-      'https://agclothingstore.netlify.app'
-  ],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: 'https://agclothingstore.netlify.app', // Your exact frontend URL
+  credentials: true // This is essential for sending cookies
+}));
+
+// 2. Add a proxy trust setting (important for Render/Heroku deployments)
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
