@@ -9,22 +9,16 @@ const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       req.user = await User.findById(decoded.userId).select('-password');
-
-      if (req.user) {
-        next();
-      } else {
-        res.status(401).json({ message: 'Not authorized, user not found' });
-      }
+      next();
     } catch (error) {
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } else {
-    res.status(401).json({ message: 'Not authorized, no token provided' });
+    res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
 
 const admin = (req, res, next) => {
-  // This check is now reliable because 'protect' has already attached the full user object.
   if (req.user && req.user.isAdmin) {
     next();
   } else {

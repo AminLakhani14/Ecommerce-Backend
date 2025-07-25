@@ -18,8 +18,8 @@ router.route('/myorders').get(protect, getMyOrders);
 router.route('/:id').get(protect, getOrderById);
 router.route('/:id/pay').put(protect, updateOrderToPaid);
 
-router.route('/:id/cancel').put(admin, cancelOrder);
-router.route('/').get(admin, getOrders); 
-router.route('/:id/deliver').put(admin, updateOrderToDelivered); 
+router.route('/').get(protect, admin, getOrders);
+router.route('/:id/deliver').put(protect, admin, updateOrderToDelivered);
+router.route('/:id/cancel').put(protect, admin, cancelOrder);
 
 export default router;

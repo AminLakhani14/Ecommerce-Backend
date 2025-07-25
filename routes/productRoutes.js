@@ -22,12 +22,8 @@ router.get('/category/:categoryName', getProductsByCategory);
 router.get('/filter/:category/:subCategory', getProductsByFilter);
 router.route('/:id').get(getProductById);
 
-// --- START: THE FINAL FIX ---
-// ADMIN ROUTES (These ONLY need the 'admin' middleware)
-router.route('/').post(admin, upload.array('gallery', 6), createProduct); // REMOVED 'protect'
-router.route('/:id')
-  .put(admin, updateProduct) // REMOVED 'protect'
-  .delete(admin, deleteProduct); // REMOVED 'protect'
-// --- END: THE FINAL FIX ---
+router.route('/').post(protect, admin, upload.array('gallery', 6), createProduct);
+router.route('/:id').put(protect, admin, updateProduct);
+router.route('/:id').delete(protect, admin, deleteProduct);
 
 export default router;
