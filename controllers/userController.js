@@ -11,8 +11,8 @@ const authUser = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      isAdmin: user.isAdmin,
-      token: generateToken(user._id), // <-- RETURN TOKEN HERE
+      isAdmin: user.isAdmin, // This was the missing piece.
+      token: generateToken(user._id),
     });
   } else {
     res.status(401).json({ message: 'Invalid email or password' });
@@ -22,11 +22,9 @@ const authUser = async (req, res) => {
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
   const userExists = await User.findOne({ email });
-
   if (userExists) {
     return res.status(400).json({ message: 'User already exists' });
   }
-
   const user = await User.create({ name, email, password });
 
   if (user) {
@@ -35,7 +33,7 @@ const registerUser = async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
-      token: generateToken(user._id), // <-- RETURN TOKEN HERE
+      token: generateToken(user._id),
     });
   } else {
     res.status(400).json({ message: 'Invalid user data' });

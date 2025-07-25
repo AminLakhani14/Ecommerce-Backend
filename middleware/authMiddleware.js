@@ -3,24 +3,28 @@ import User from '../models/userModel.js';
 
 const protect = async (req, res, next) => {
   let token;
-  // Look for the token in the 'Authorization' header
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
-      // Get token from header (it's in the format 'Bearer TOKEN')
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
       req.user = await User.findById(decoded.userId).select('-password');
-      next(); // Success!
+
+      if (req.user) {
+        next();
+      } else {
+        res.status(401).json({ message: 'Not authorized, user not found' });
+      }
     } catch (error) {
-      console.error('Token verification failed:', error);
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } else {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    res.status(401).json({ message: 'Not authorized, no token provided' });
   }
 };
 
 const admin = (req, res, next) => {
+  // This check is now reliable because 'protect' has already attached the full user object.
   if (req.user && req.user.isAdmin) {
     next();
   } else {
