@@ -16,7 +16,7 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: 'Variants data is missing.' });
     }
 
-    const parsedVariants = JSON.parse(variants);
+    const parsedVariants = JSON.parse(variants).filter(v => v.size && v.size.trim() !== "");
     
     const imagePaths = req.files.map(file => `/uploads/${file.filename}`);
     const mainImage = imagePaths[0];
@@ -48,7 +48,6 @@ const createProduct = async (req, res) => {
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
   try {
-    // req.body will now be a clean JSON object
     const { name, price, description, category, subCategory, isOnSale, variants } = req.body;
     
     const product = await Product.findById(req.params.id);
@@ -59,14 +58,18 @@ const updateProduct = async (req, res) => {
       product.description = description || product.description;
       product.category = category || product.category;
       product.subCategory = subCategory || product.subCategory;
-      product.isOnSale = isOnSale ?? product.isOnSale;
+      product.isOnSale = isOnSale === 'true' || isOnSale === true;
 
-      // --- START: THIS IS THE FIX ---
-      // Variants will arrive as an array, so no need to parse.
       if (variants) {
-        product.variants = variants;
+        const parsedVariants = typeof variants === 'string' ? JSON.parse(variants) : variants;
+        product.variants = parsedVariants.filter(v => v.size && v.size.trim() !== "");
       }
-      // --- END: THIS IS THE FIX ---
+
+      if (req.files && req.files.length > 0) {
+        const imagePaths = req.files.map(file => `/uploads/${file.filename}`);
+        product.image = imagePaths[0];
+        product.gallery = imagePaths.slice(1);
+      }
 
       const updatedProduct = await product.save();
       res.json(updatedProduct);
