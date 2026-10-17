@@ -28,7 +28,7 @@ For deployments, install development dependencies during the build, run `npm run
 
 ## Render deployment
 
-Create a Node web service from this repository on the Free instance plan. Use `npm ci --include=dev && npm run build` as the build command and `npm start` as the start command. Set the health check path to `/`. Render supplies `PORT`; do not set a fixed port.
+The root `render.yaml` manages the existing `ag-store-ecommerce-backend` service as a Blueprint. It pins the Free plan and Singapore region, builds with `npm ci --include=dev && npm run build`, starts with `npm start`, checks `/`, and automatically deploys every commit pushed to `main`. Render supplies `PORT`; do not set a fixed port.
 
 Configure `NODE_ENV=production`, `MONGO_URI`, and `JWT_SECRET` in Render's environment settings. Add the Google OAuth and email settings only if those integrations are needed, and set `FRONTEND_URL` to the deployed frontend origin. Never commit `.env`.
 
