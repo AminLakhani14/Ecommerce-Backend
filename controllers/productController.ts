@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express';
 import Product from '../models/productModel.js';
+import { validateImageUrl } from '../utils/productImageUrls.js';
 
 const createProduct: RequestHandler<Record<string, string>> = async (req, res) => {
   try {
@@ -8,8 +9,13 @@ const createProduct: RequestHandler<Record<string, string>> = async (req, res) =
       return res.status(401).json({ message: 'Not authorized, no user token' });
     }
 
-    if (!files || files.length === 0) {
-      return res.status(400).json({ message: 'Product images are required.' });
+    let imageUrl: string | undefined;
+    if (req.body.imageUrl) {
+      try { imageUrl = validateImageUrl(req.body.imageUrl); }
+      catch { return res.status(400).json({ message: 'Provide a valid HTTP or HTTPS image URL.' }); }
+    }
+    if (files.length === 0 && !imageUrl) {
+      return res.status(400).json({ message: 'An image URL or product image upload is required.' });
     }
     
     const { name, price, description, category, subCategory, isOnSale, variants } = req.body;
@@ -21,7 +27,7 @@ const createProduct: RequestHandler<Record<string, string>> = async (req, res) =
     const parsedVariants = JSON.parse(variants).filter((v: { size: string; stock: number }) => v.size && v.size.trim() !== "");
     
     const imagePaths = files.map(file => `/uploads/${file.filename}`);
-    const mainImage = imagePaths[0];
+    const mainImage = imagePaths[0] || imageUrl;
     const galleryImages = imagePaths.slice(1);
 
     const product = new Product({
@@ -52,6 +58,11 @@ const updateProduct: RequestHandler<Record<string, string>> = async (req, res) =
   try {
     const files = Array.isArray(req.files) ? req.files : [];
     const { name, price, description, category, subCategory, isOnSale, variants } = req.body;
+    let imageUrl: string | undefined;
+    if (req.body.imageUrl) {
+      try { imageUrl = validateImageUrl(req.body.imageUrl); }
+      catch { return res.status(400).json({ message: 'Provide a valid HTTP or HTTPS image URL.' }); }
+    }
     
     const product = await Product.findById(req.params.id);
 
@@ -62,6 +73,7 @@ const updateProduct: RequestHandler<Record<string, string>> = async (req, res) =
       product.category = category || product.category;
       product.subCategory = subCategory || product.subCategory;
       product.isOnSale = isOnSale === 'true' || isOnSale === true;
+      if (imageUrl) product.image = imageUrl;
 
       if (variants) {
         const parsedVariants = typeof variants === 'string' ? JSON.parse(variants) : variants;

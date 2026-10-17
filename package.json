@@ -11,6 +11,7 @@
     "start": "node dist/server.js",
     "data:import": "tsx seeder.ts",
     "data:destroy": "tsx seeder.ts -d",
+    "data:collections": "tsx collectionsSeeder.ts",
     "test": "node --import tsx --test tests/*.test.ts"
   },
   "engines": {

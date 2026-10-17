@@ -22,6 +22,8 @@ All application sources use TypeScript with strict checking and Node ESM resolut
 
 `npm run data:import` replaces database contents with seed data. `npm run data:destroy` deletes database contents. Run these only against the intended database.
 
+`npm run data:collections -- --dry-run` validates the Accessories, Backpacks, and Clothing catalog (ten products each). `npm run data:collections` adds missing entries without changing existing products, inventory, users, or orders. It verifies that `MONGO_URI` matches the catalog exposed by `DEPLOYED_API_URL` (defaults to the Render API). Product images remain external URLs; no image files are uploaded. Redeploy the backend to enable the new categories and image URL fields in the admin create/edit API.
+
 For deployments, install development dependencies during the build, run `npm run build`, and use `npm start`. `vercel.json` points to the TypeScript server handler. Uploads remain in `backend/uploads/`; they are served from the same directory in source and compiled runs.
 
 `node_modules/`, `dist/`, and `.env` are ignored. Recreate installed dependencies using `npm ci`.
