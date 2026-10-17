@@ -2,15 +2,19 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node server.js",
-    "server": "nodemon server.js",
-    "data:import": "node seeder.js",
-    "data:destroy": "node seeder.js -d"
+    "dev": "tsx watch server.ts",
+    "server": "tsx watch server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js",
+    "data:import": "tsx seeder.ts",
+    "data:destroy": "tsx seeder.ts -d",
+    "test": "node --import tsx --test tests/*.test.ts"
   },
   "engines": {
-    "node": "18.x"
+    "node": "26.x"
   },
   "type": "module",
   "keywords": [],
@@ -32,7 +36,16 @@
     "passport-local": "^1.0.0"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0",
-    "nodemon": "^3.1.10"
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.3.0",
+    "@types/node": "^26.6.5",
+    "@types/nodemailer": "^8.0.2",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
   }
 }
