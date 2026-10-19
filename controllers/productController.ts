@@ -1,6 +1,10 @@
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler, Response } from 'express';
+import mongoose from 'mongoose';
 import Product from '../models/productModel.js';
 import { validateImageUrl } from '../utils/productImageUrls.js';
+import { parseProductCategories } from '../utils/categories.js';
+import { cachedJson } from '../utils/readCache.js';
+import { cardFields, catalogCollation, normalizeProduct, pagination, productFields } from '../utils/productQueries.js';
 
 const createProduct: RequestHandler<Record<string, string>> = async (req, res) => {
   try {
@@ -19,6 +23,9 @@ const createProduct: RequestHandler<Record<string, string>> = async (req, res) =
     }
     
     const { name, price, description, category, subCategory, isOnSale, variants } = req.body;
+    let categories: string[];
+    try { categories = await parseProductCategories(category); }
+    catch (error) { return res.status(400).json({ message: (error as Error).message }); }
 
     if (!variants) {
       return res.status(400).json({ message: 'Variants data is missing.' });
@@ -36,7 +43,7 @@ const createProduct: RequestHandler<Record<string, string>> = async (req, res) =
       user: req.user!._id,
       image: mainImage,
       gallery: galleryImages,
-      category,
+      category: categories,
       subCategory,
       description,
       isOnSale: isOnSale === 'true',
@@ -67,10 +74,13 @@ const updateProduct: RequestHandler<Record<string, string>> = async (req, res) =
     const product = await Product.findById(req.params.id);
 
     if (product) {
+      if (category !== undefined) {
+        try { product.category = await parseProductCategories(category); }
+        catch (error) { return res.status(400).json({ message: (error as Error).message }); }
+      }
       product.name = name || product.name;
       product.price = price || product.price;
       product.description = description || product.description;
-      product.category = category || product.category;
       product.subCategory = subCategory || product.subCategory;
       product.isOnSale = isOnSale === 'true' || isOnSale === true;
       if (imageUrl) product.image = imageUrl;
@@ -114,88 +124,76 @@ const deleteProduct: RequestHandler<Record<string, string>> = async (req, res) =
   }
 };
 
-const getProducts: RequestHandler<Record<string, string>> = async (req, res) => {
-  const products = await Product.find({});
-  res.json(products);
-};
+type CatalogRequest = Request<Record<string, string>>;
 
-const getProductById: RequestHandler<Record<string, string>> = async (req, res) => {
-  const product = await Product.findById(req.params.id);
-  if (product) {
-    res.json(product);
-  } else {
-    res.status(404).send('Product not found');
-  }
-};
+function catalogError(res: Response, error: unknown) {
+  const status = error && typeof error === 'object' && 'status' in error ? Number(error.status) : 500;
+  res.status(status).json({ message: status === 500 ? 'Unable to load products.' : (error as Error).message });
+}
 
-const getSaleProducts: RequestHandler<Record<string, string>> = async (req, res) => {
-  try {
-    const files = Array.isArray(req.files) ? req.files : [];
-    const products = await Product.find({ isOnSale: true });
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
-  }
-};
+const categorizedProducts = { category: { $exists: true, $nin: [[], null, ''] } };
 
-const getProductsByCategory: RequestHandler<Record<string, string>> = async (req, res) => {
-  try {
-    const files = Array.isArray(req.files) ? req.files : [];
-    const products = await Product.find({ 
-      category: new RegExp(`^${req.params.categoryName}$`, 'i') 
-    });
-      res.json(products);
-  } catch (error) {
-    res.status(500).send('Server Error');
-  }
-};
+function productList(filter: (req: CatalogRequest) => Record<string, unknown>, adminView = false): RequestHandler<Record<string, string>> {
+  return async (req, res) => {
+    try {
+      const page = pagination(req);
+      await cachedJson(req, res, 'products', 15000, async () => {
+        const match = { ...(adminView ? {} : categorizedProducts), ...filter(req) };
+        let query = Product.find(match).select(productFields).sort({ createdAt: 1, _id: 1 });
+        if ('category' in match || 'subCategory' in match) query = query.collation(catalogCollation);
+        if (page) query = query.skip(page.skip).limit(page.limit);
+        return (await query.lean()).map(product => ({ ...normalizeProduct(product), gallery: product.gallery || [] }));
+      });
+    } catch (error) { catalogError(res, error); }
+  };
+}
+
+const getProducts = productList(() => ({}));
+const getAdminProducts = productList(() => ({}), true);
+const getSaleProducts = productList(() => ({ isOnSale: true }));
+const getProductsByCategory = productList(req => ({ category: req.params.categoryName }));
+const getProductsBySubCategory = productList(req => ({ subCategory: req.params.subCategoryName }));
+const getProductsByFilter = productList(req => ({ category: req.params.category, subCategory: req.params.subCategory }));
+
+function productDetails(adminView = false): RequestHandler<Record<string, string>> {
+  return async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid product ID.' });
+    try {
+      await cachedJson(req, res, 'products', 15000, async () => {
+        const product = await Product.findById(req.params.id).select(productFields).lean();
+        const normalized = product && normalizeProduct(product);
+        if (!normalized || (!adminView && normalized.category.length === 0)) {
+          throw Object.assign(new Error('Product not found'), { status: 404 });
+        }
+        return { ...normalized, gallery: product!.gallery || [] };
+      });
+    } catch (error) { catalogError(res, error); }
+  };
+}
+const getProductById = productDetails();
+const getAdminProductById = productDetails(true);
 
 const getHomepageProducts: RequestHandler<Record<string, string>> = async (req, res) => {
   try {
-    const files = Array.isArray(req.files) ? req.files : [];
-    const men = await Product.find({ category: 'Men' }).sort({ createdAt: -1 }).limit(5);
-    const women = await Product.find({ category: 'Women' }).sort({ createdAt: -1 }).limit(5);
-    const children = await Product.find({ category: 'Children' }).sort({ createdAt: -1 }).limit(5);
-    const accessories = await Product.find({ category: 'Accessories' }).sort({ createdAt: -1 }).limit(5);
-    const sale = await Product.find({ isOnSale: true }).sort({ createdAt: -1 }).limit(5);
-
-    res.json({ men, women, children, accessories, sale }); // <-- Add accessories
-  } catch (error) {
-    res.status(500).send('Server Error');
-  }
-};
-
-const getProductsBySubCategory: RequestHandler<Record<string, string>> = async (req, res) => {
-  try {
-    const files = Array.isArray(req.files) ? req.files : [];
-    const subCategory = decodeURIComponent(req.params.subCategoryName);
-    const products = await Product.find({ 
-      subCategory: new RegExp(`^${subCategory}$`, 'i') 
+    await cachedJson(req, res, 'products', 15000, async () => {
+      // Fetch only displayed cards. Independent queries share one network round trip window.
+      const sections = [
+        { key: 'children', filter: { category: 'Children' }, limit: 5, direction: -1 as const },
+        { key: 'accessories', filter: { category: 'Accessories' }, limit: 4, direction: 1 as const },
+        { key: 'backpacks', filter: { category: 'Backpacks' }, limit: 4, direction: 1 as const },
+        { key: 'clothing', filter: { category: 'Clothing' }, limit: 4, direction: 1 as const },
+        { key: 'sale', filter: { isOnSale: true }, limit: 5, direction: -1 as const },
+      ];
+      const entries = await Promise.all(sections.map(async section => {
+        let query = Product.find({ ...categorizedProducts, ...section.filter }).select(cardFields)
+          .sort({ createdAt: section.direction, _id: section.direction }).limit(section.limit);
+        if ('category' in section.filter) query = query.collation(catalogCollation);
+        const products = await query.lean();
+        return [section.key, products.map(normalizeProduct)];
+      }));
+      return Object.fromEntries(entries);
     });
-    res.json(products);
-  } catch (error) {
-    console.error('Error fetching products by sub-category:', error);
-    res.status(500).json({ message: 'Server Error' });
-  }
+  } catch (error) { catalogError(res, error); }
 };
 
-const getProductsByFilter: RequestHandler<Record<string, string>> = async (req, res) => {
-  try {
-    const files = Array.isArray(req.files) ? req.files : [];
-    const category = decodeURIComponent(req.params.category);
-    const subCategory = decodeURIComponent(req.params.subCategory);
-
-    // Query that matches BOTH the category AND the sub-category, case-insensitively
-    const products = await Product.find({
-      category: new RegExp(`^${category}$`, 'i'),
-      subCategory: new RegExp(`^${subCategory}$`, 'i'),
-    });
-
-    res.json(products);
-  } catch (error) {
-    console.error('Error fetching filtered products:', error);
-    res.status(500).json({ message: 'Server Error' });
-  }
-};
-
-export { getProducts, getProductById, createProduct, getHomepageProducts, getProductsByCategory, updateProduct, deleteProduct, getSaleProducts,getProductsBySubCategory,getProductsByFilter };
+export { getAdminProducts, getAdminProductById, getProducts, getProductById, createProduct, getHomepageProducts, getProductsByCategory, updateProduct, deleteProduct, getSaleProducts, getProductsBySubCategory, getProductsByFilter };

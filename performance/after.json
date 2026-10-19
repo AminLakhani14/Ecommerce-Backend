@@ -1,0 +1,220 @@
+{
+  "measuredAt": "2026-10-19T08:51:09.016Z",
+  "base": "http://localhost:5000",
+  "results": [
+    {
+      "path": "/api/products/homepage",
+      "milliseconds": [
+        403.09,
+        3.44,
+        2.52,
+        2.73,
+        2.04,
+        1.79,
+        1.92,
+        1.7,
+        1.94,
+        2.33
+      ],
+      "medianMs": 2.33,
+      "p95Ms": 403.09,
+      "missMs": [
+        403.09
+      ],
+      "warmMedianMs": 2.04,
+      "warmP95Ms": 3.44,
+      "cache": [
+        "MISS",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT"
+      ],
+      "jsonBytes": 5879,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/products",
+      "milliseconds": [
+        529.81,
+        2.18,
+        1.71,
+        1.63,
+        1.55,
+        1.49,
+        2.17,
+        1.65,
+        1.73,
+        1.92
+      ],
+      "medianMs": 1.73,
+      "p95Ms": 529.81,
+      "missMs": [
+        529.81
+      ],
+      "warmMedianMs": 1.71,
+      "warmP95Ms": 2.18,
+      "cache": [
+        "MISS",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT"
+      ],
+      "jsonBytes": 22965,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/products/category/accessories",
+      "milliseconds": [
+        270.36,
+        3.19,
+        3.6,
+        2.6,
+        3.74,
+        1.92,
+        1.71,
+        1.34,
+        1.42,
+        1.37
+      ],
+      "medianMs": 2.6,
+      "p95Ms": 270.36,
+      "missMs": [
+        270.36
+      ],
+      "warmMedianMs": 1.92,
+      "warmP95Ms": 3.74,
+      "cache": [
+        "MISS",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT"
+      ],
+      "jsonBytes": 7166,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/products/filter/Accessories/Sunglasses",
+      "milliseconds": [
+        283.73,
+        2.9,
+        2.23,
+        1.9,
+        1.53,
+        1.34,
+        1.83,
+        1.87,
+        1.63,
+        1.6
+      ],
+      "medianMs": 1.87,
+      "p95Ms": 283.73,
+      "missMs": [
+        283.73
+      ],
+      "warmMedianMs": 1.83,
+      "warmP95Ms": 2.9,
+      "cache": [
+        "MISS",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT"
+      ],
+      "jsonBytes": 3542,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/products/sale",
+      "milliseconds": [
+        246.29,
+        2.86,
+        2.16,
+        1.96,
+        2.03,
+        1.45,
+        1.34,
+        1.09,
+        1.04,
+        1.93
+      ],
+      "medianMs": 1.96,
+      "p95Ms": 246.29,
+      "missMs": [
+        246.29
+      ],
+      "warmMedianMs": 1.93,
+      "warmP95Ms": 2.86,
+      "cache": [
+        "MISS",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT"
+      ],
+      "jsonBytes": 5472,
+      "encoding": "gzip"
+    },
+    {
+      "path": "/api/categories",
+      "milliseconds": [
+        0.94,
+        2.64,
+        0.78,
+        0.58,
+        0.56,
+        0.56,
+        0.54,
+        0.48,
+        0.48,
+        0.55
+      ],
+      "medianMs": 0.56,
+      "p95Ms": 2.64,
+      "missMs": [],
+      "warmMedianMs": 0.56,
+      "warmP95Ms": 2.64,
+      "cache": [
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT",
+        "HIT"
+      ],
+      "jsonBytes": 63,
+      "encoding": null
+    }
+  ]
+}

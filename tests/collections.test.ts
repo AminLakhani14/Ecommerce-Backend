@@ -4,6 +4,8 @@ import { once } from 'node:events';
 import mongoose from 'mongoose';
 import products from '../data/collectionProducts.js';
 import Product from '../models/productModel.js';
+import Category from '../models/categoryModel.js';
+import { queryResult } from './helpers/query.js';
 import { createApp } from '../app.js';
 
 test('catalog has ten valid, distinct products per requested category with remote image URLs', async () => {
@@ -21,6 +23,7 @@ test('catalog has ten valid, distinct products per requested category with remot
 });
 
 test('admin product creation accepts remote images without uploads and rejects invalid URLs', async (context) => {
+  context.mock.method(Category, 'find', () => queryResult([]));
   context.mock.method(Product.prototype, 'save', async function (this: InstanceType<typeof Product>) {
     await this.validate();
     return this;
@@ -43,9 +46,9 @@ test('admin product creation accepts remote images without uploads and rejects i
     form.set('imageUrl', 'https://images.example.com/backpack.jpg');
     const response = await fetch(url, { method: 'POST', body: form });
     assert.equal(response.status, 200);
-    const result: { image: string; category: string } = await response.json();
+    const result: { image: string; category: string[] } = await response.json();
     assert.equal(result.image, 'https://images.example.com/backpack.jpg');
-    assert.equal(result.category, 'Backpacks');
+    assert.deepEqual(result.category, ['Backpacks']);
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   }

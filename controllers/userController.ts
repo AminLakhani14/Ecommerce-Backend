@@ -5,7 +5,7 @@ import generateToken from '../utils/generateToken.js';
 // Standard email/password login
 const authUser: RequestHandler<Record<string, string>> = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select('_id name email isAdmin password');
 
   if (user && (await user.matchPassword(password))) {
     res.json({
@@ -22,7 +22,7 @@ const authUser: RequestHandler<Record<string, string>> = async (req, res) => {
 
 const registerUser: RequestHandler<Record<string, string>> = async (req, res) => {
   const { name, email, password } = req.body;
-  const userExists = await User.findOne({ email });
+  const userExists = await User.exists({ email });
   if (userExists) {
     return res.status(400).json({ message: 'User already exists' });
   }
@@ -48,7 +48,7 @@ const logoutUser: RequestHandler<Record<string, string>> = (req, res) => {
 
 
 const getUserProfile: RequestHandler<Record<string, string>> = async (req, res) => {
-  const user = await User.findById(req.user!._id);
+  const user = await User.findById(req.user!._id).select('_id name email isAdmin').lean();
   if (user) {
     res.json({ _id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin });
   } else {

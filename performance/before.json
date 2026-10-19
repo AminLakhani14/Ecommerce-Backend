@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-19",
+  "base": "http://localhost:5000",
+  "samplesPerEndpoint": 5,
+  "results": {
+    "/api/products/homepage": {
+      "milliseconds": [
+        2591,
+        4564,
+        2746,
+        3251,
+        1386
+      ],
+      "jsonBytes": 9553
+    },
+    "/api/products": {
+      "milliseconds": [
+        989,
+        559,
+        279,
+        305,
+        495
+      ],
+      "jsonBytes": 26430
+    },
+    "/api/products/category/accessories": {
+      "milliseconds": [
+        747,
+        271,
+        245,
+        263,
+        286
+      ],
+      "jsonBytes": 7916
+    },
+    "/api/products/filter/Accessories/Sunglasses": {
+      "milliseconds": [
+        470,
+        595,
+        310,
+        253,
+        251
+      ],
+      "jsonBytes": 3917
+    },
+    "/api/products/sale": {
+      "milliseconds": [
+        355,
+        242,
+        273,
+        300,
+        360
+      ],
+      "jsonBytes": 6345
+    },
+    "/api/categories": {
+      "milliseconds": [
+        299,
+        270,
+        225,
+        256,
+        239
+      ],
+      "jsonBytes": 63
+    }
+  }
+}

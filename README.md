@@ -28,6 +28,14 @@ For deployments, install development dependencies during the build, run `npm run
 
 `node_modules/`, `dist/`, and `.env` are ignored. Recreate installed dependencies using `npm ci`.
 
+## API performance
+
+Product and category reads use bounded JSON caches with concurrent request coalescing, ETags, and response compression. Product responses expire after 15 seconds; category responses after 60 seconds. Product/order mutations invalidate product responses, and category mutations invalidate category responses. These caches are per API process; external database changes and other instances are reflected after the TTL. Account and order responses are private and are not shared-cached.
+
+The homepage endpoint returns only the displayed `children`, `accessories`, `backpacks`, `clothing`, and `sale` cards, with independent indexed queries run in parallel. Product list routes accept optional `page` and `limit` query parameters (limit 1–100); responses remain arrays. Product detail responses include descriptions and galleries, while homepage cards omit them. Lean reads preserve legacy single-category products explicitly.
+
+Run `npm run db:indexes` to add the declared product, order, and category indexes without dropping existing indexes. Run `npm run benchmark:api` to measure public endpoints; set `BENCHMARK_API_URL` for a deployed API or `BENCHMARK_SAMPLES` to change the sample count. [Measured results and limitations](performance/README.md) include both cache misses and warm requests. Deploy the backend and frontend together because the homepage response changed.
+
 ## Render deployment
 
 The root `render.yaml` manages the existing `ag-store-ecommerce-backend` service as a Blueprint. It pins the Free plan and Singapore region, builds with `npm ci --include=dev && npm run build`, starts with `npm start`, checks `/`, and automatically deploys every commit pushed to `main`. Render supplies `PORT`; do not set a fixed port.

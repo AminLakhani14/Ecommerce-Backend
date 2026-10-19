@@ -1,4 +1,7 @@
 import nodemailer from 'nodemailer';
+import type SMTPPool from 'nodemailer/lib/smtp-pool/index.js';
+
+let transporter: nodemailer.Transporter<SMTPPool.SentMessageInfo> | undefined;
 
 const sendEmail = async (options: { email: string; subject: string; html: string }) => {
   try {
@@ -9,7 +12,12 @@ const sendEmail = async (options: { email: string; subject: string; html: string
     }
 
     // 1) Create a transporter
-    const transporter = nodemailer.createTransport({
+    transporter ??= nodemailer.createTransport({
+      pool: true,
+      maxConnections: 2,
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
       service: 'Gmail', // or another service like SendGrid, Mailgun
       auth: {
         user: process.env.EMAIL_USER,

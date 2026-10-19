@@ -12,7 +12,9 @@
     "data:import": "tsx seeder.ts",
     "data:destroy": "tsx seeder.ts -d",
     "data:collections": "tsx collectionsSeeder.ts",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "node --import tsx --test tests/*.test.ts",
+    "db:indexes": "tsx scripts/ensureIndexes.ts",
+    "benchmark:api": "tsx scripts/benchmarkApi.ts"
   },
   "engines": {
     "node": "26.x"
@@ -23,6 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
@@ -37,6 +40,7 @@
     "passport-local": "^1.0.0"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

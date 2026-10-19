@@ -1,7 +1,10 @@
 import type { RequestHandler } from 'express';
+import { formatUSD } from '../utils/currency.js';
 import Order from '../models/orderModel.js';
 import sendEmail from '../utils/sendEmail.js'; // <-- THIS IS THE MISSING LINE
 import Product from '../models/productModel.js'; // <-- IMPORT PRODUCT MODEL
+import mongoose from 'mongoose';
+import { normalizeProduct } from '../utils/productQueries.js';
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
@@ -13,17 +16,28 @@ const addOrderItems: RequestHandler<Record<string, string>> = async (req, res) =
       return res.status(400).json({ message: 'No order items' });
     }
 
+    const quantities = new Map<string, number>();
     for (const item of orderItems) {
       if (!item.size) {
         // This check is now on the ORIGINAL data from the frontend payload.
         return res.status(400).json({ message: `Product "${item.name}" is missing a size in the payload.` });
       }
-      const product = await Product.findById(item._id);
-      if (!product) {
+      if (!mongoose.isValidObjectId(item._id) || !Number.isSafeInteger(item.qty) || item.qty < 1) {
+        return res.status(400).json({ message: 'Order items need a valid product ID and positive whole quantity.' });
+      }
+      const key = `${item._id}:${item.size}`;
+      quantities.set(key, (quantities.get(key) || 0) + item.qty);
+    }
+    const products = await Product.find({ _id: { $in: [...new Set(orderItems.map((item: { _id: string }) => item._id))] } })
+      .select('_id category variants').lean();
+    const productsById = new Map(products.map(product => [String(product._id), product]));
+    for (const item of orderItems) {
+      const product = productsById.get(item._id);
+      if (!product || normalizeProduct(product).category.length === 0) {
         return res.status(404).json({ message: `Product "${item.name}" not found.`});
       }
       const variant = product.variants.find(v => v.size === item.size);
-      if (!variant || variant.stock < item.qty) {
+      if (!variant || variant.stock < quantities.get(`${item._id}:${item.size}`)!) {
         return res.status(400).json({ message: `Not enough stock for ${item.name} (Size: ${item.size}).` });
       }
     }
@@ -54,11 +68,13 @@ const addOrderItems: RequestHandler<Record<string, string>> = async (req, res) =
 
     const createdOrder = await order.save();
     
-    for (const item of createdOrder.orderItems) {
-      await Product.updateOne(
-        { _id: item.product, 'variants.size': item.size },
-        { $inc: { 'variants.$.stock': -item.qty } }
-      );
+    try {
+      await Product.bulkWrite(createdOrder.orderItems.map(item => ({ updateOne: {
+        filter: { _id: item.product, 'variants.size': item.size },
+        update: { $inc: { 'variants.$.stock': -item.qty } },
+      } })));
+    } finally {
+      req.app.locals.readCache.invalidate('products:');
     }
 
     const emailHtml = `
@@ -83,22 +99,22 @@ const addOrderItems: RequestHandler<Record<string, string>> = async (req, res) =
                   <td style="padding: 8px; border-bottom: 1px solid #eee;">
                     ${item.name} <span style="color: #666;">(x${item.qty})</span>
                   </td>
-                  <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">PKR ${item.price * item.qty}</td>
+                  <td style="text-align: right; padding: 8px; border-bottom: 1px solid #eee;">${formatUSD(item.price * item.qty)}</td>
                 </tr>
               `).join('')}
             </tbody>
             <tfoot>
               <tr>
                 <td style="text-align: right; padding: 8px;">Subtotal:</td>
-                <td style="text-align: right; padding: 8px;">PKR ${createdOrder.itemsPrice}</td>
+                <td style="text-align: right; padding: 8px;">${formatUSD(createdOrder.itemsPrice)}</td>
               </tr>
               <tr>
                 <td style="text-align: right; padding: 8px;">Shipping:</td>
-                <td style="text-align: right; padding: 8px;">PKR ${createdOrder.shippingPrice}</td>
+                <td style="text-align: right; padding: 8px;">${formatUSD(createdOrder.shippingPrice)}</td>
               </tr>
               <tr style="font-weight: bold; font-size: 1.1em; border-top: 2px solid #ddd;">
                 <td style="text-align: right; padding: 8px;">Total:</td>
-                <td style="text-align: right; padding: 8px;">PKR ${createdOrder.totalPrice}</td>
+                <td style="text-align: right; padding: 8px;">${formatUSD(createdOrder.totalPrice)}</td>
               </tr>
             </tfoot>
           </table>
@@ -120,7 +136,7 @@ const addOrderItems: RequestHandler<Record<string, string>> = async (req, res) =
 };
 
 const getOrderById: RequestHandler<Record<string, string>> = async (req, res) => {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    const order = await Order.findById(req.params.id).select('-__v').populate('user', 'name email').lean();
     if (order) {
         res.json(order);
     } else {
@@ -190,12 +206,12 @@ const cancelOrder: RequestHandler<Record<string, string>> = async (req, res) => 
 };
 
 const getMyOrders: RequestHandler<Record<string, string>> = async (req, res) => {
-  const orders = await Order.find({ user: req.user!._id });
+  const orders = await Order.find({ user: req.user!._id }).select('-__v').sort({ createdAt: -1 }).lean();
   res.json(orders);
 };
 
 const getOrders: RequestHandler<Record<string, string>> = async (req, res) => {
-  const orders = await Order.find({}).populate('user', 'id name');
+  const orders = await Order.find({}).select('-__v').sort({ createdAt: -1 }).populate('user', 'name').lean();
   res.json(orders);
 };
 

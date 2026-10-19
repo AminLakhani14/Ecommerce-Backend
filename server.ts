@@ -4,13 +4,15 @@ import { createApp } from './app.js';
 import connectDB from './config/db.js';
 
 const app = createApp();
-let connection: ReturnType<typeof connectDB> | undefined;
 
 // Vercel invokes this handler without opening a listening socket.
 export default async function handler(req: Request, res: Response) {
-  connection ??= connectDB();
-  await connection;
-  app(req, res);
+  try {
+    await connectDB();
+    app(req, res);
+  } catch {
+    res.status(503).json({ message: 'Database temporarily unavailable. Please retry.' });
+  }
 }
 
 if (!process.env.VERCEL) {

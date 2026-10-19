@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/api/products/homepage",
+    "jsonBytes": 5879,
+    "wireBodyBytes": 949,
+    "encoding": "gzip"
+  },
+  {
+    "path": "/api/products",
+    "jsonBytes": 22965,
+    "wireBodyBytes": 2346,
+    "encoding": "gzip"
+  }
+]
