@@ -16,7 +16,7 @@ test('Express starts on Node 26 with routes, uploads, and CORS intact', async ()
     assert(address && typeof address !== 'string');
     const base = `http://127.0.0.1:${address.port}`;
     const health = await fetch(base, { headers: { Origin: 'http://localhost:3000' } });
-    assert.equal(await health.text(), 'AG-Store API is running...');
+    assert.equal(await health.text(), 'Sbrfashion API is running...');
     assert.equal(health.headers.get('access-control-allow-origin'), 'http://localhost:3000');
     assert.equal(health.headers.get('access-control-allow-credentials'), 'true');
     const preflight = await fetch(`${base}/api/products`, { method: 'OPTIONS', headers: { Origin: 'http://localhost:3000', 'Access-Control-Request-Method': 'POST' } });

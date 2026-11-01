@@ -1,4 +1,4 @@
-# AG Store backend
+# Sbrfashion backend
 
 Use Node.js **26.12.0** (Current). `.nvmrc`, `.node-version`, and `package.json` specify Node 26. With fnm, run `fnm install` and `fnm use` in this directory.
 

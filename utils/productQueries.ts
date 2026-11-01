@@ -1,8 +1,8 @@
 import type { Request } from 'express';
 
 export const catalogCollation = { locale: 'en', strength: 2 };
-export const productFields = '_id name image gallery description category subCategory price countInStock isOnSale isActive variants.size variants.stock createdAt updatedAt';
-export const cardFields = '_id name image category subCategory price countInStock isOnSale isActive variants.size variants.stock';
+export const productFields = '_id name slug image gallery description category subCategory price salePrice countInStock isOnSale isActive variants.size variants.stock createdAt updatedAt';
+export const cardFields = '_id name slug image category subCategory price salePrice countInStock isOnSale isActive variants.size variants.stock';
 
 // Lean reads skip Mongoose casting/defaults, so preserve the public product shape explicitly.
 export function normalizeProduct<T extends { category?: unknown; gallery?: unknown; variants?: unknown; isActive?: unknown; isOnSale?: unknown; countInStock?: unknown }>(product: T) {

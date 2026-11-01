@@ -1,10 +1,21 @@
 import type { Request, RequestHandler, Response } from 'express';
 import mongoose from 'mongoose';
 import Product from '../models/productModel.js';
+import { isObjectIdString } from '../utils/slug.js';
 import { validateImageUrl } from '../utils/productImageUrls.js';
 import { parseProductCategories } from '../utils/categories.js';
 import { cachedJson } from '../utils/readCache.js';
 import { cardFields, catalogCollation, normalizeProduct, pagination, productFields } from '../utils/productQueries.js';
+
+/** Empty clears the sale price; otherwise it must sit below the regular price. */
+function parseSalePrice(value: unknown, price: number): number | undefined | Error {
+  if (value === undefined || value === null || value === '') return undefined;
+  const salePrice = Number(value);
+  if (!Number.isFinite(salePrice) || salePrice < 0 || salePrice >= price) {
+    return new Error('Sale price must be a valid amount below the regular price.');
+  }
+  return salePrice;
+}
 
 const createProduct: RequestHandler<Record<string, string>> = async (req, res) => {
   try {
@@ -23,6 +34,8 @@ const createProduct: RequestHandler<Record<string, string>> = async (req, res) =
     }
     
     const { name, price, description, category, subCategory, isOnSale, variants } = req.body;
+    const salePrice = parseSalePrice(req.body.salePrice, Number(price));
+    if (salePrice instanceof Error) return res.status(400).json({ message: salePrice.message });
     let categories: string[];
     try { categories = await parseProductCategories(category); }
     catch (error) { return res.status(400).json({ message: (error as Error).message }); }
@@ -40,6 +53,7 @@ const createProduct: RequestHandler<Record<string, string>> = async (req, res) =
     const product = new Product({
       name,
       price,
+      salePrice,
       user: req.user!._id,
       image: mainImage,
       gallery: galleryImages,
@@ -83,6 +97,11 @@ const updateProduct: RequestHandler<Record<string, string>> = async (req, res) =
       product.description = description || product.description;
       product.subCategory = subCategory || product.subCategory;
       product.isOnSale = isOnSale === 'true' || isOnSale === true;
+      if (req.body.salePrice !== undefined) {
+        const salePrice = parseSalePrice(req.body.salePrice, product.price);
+        if (salePrice instanceof Error) return res.status(400).json({ message: salePrice.message });
+        product.salePrice = salePrice;
+      }
       if (imageUrl) product.image = imageUrl;
 
       if (variants) {
@@ -157,10 +176,13 @@ const getProductsByFilter = productList(req => ({ category: req.params.category,
 
 function productDetails(adminView = false): RequestHandler<Record<string, string>> {
   return async (req, res) => {
-    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid product ID.' });
+    // Storefront URLs use the slug; IDs still work for old links and order history.
+    const byId = isObjectIdString(req.params.id);
+    if (adminView && !byId) return res.status(400).json({ message: 'Invalid product ID.' });
     try {
       await cachedJson(req, res, 'products', 15000, async () => {
-        const product = await Product.findById(req.params.id).select(productFields).lean();
+        const product = await (byId ? Product.findById(req.params.id) : Product.findOne({ slug: req.params.id.toLowerCase() }))
+          .select(productFields).lean();
         const normalized = product && normalizeProduct(product);
         if (!normalized || (!adminView && normalized.category.length === 0)) {
           throw Object.assign(new Error('Product not found'), { status: 404 });

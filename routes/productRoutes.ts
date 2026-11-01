@@ -14,6 +14,7 @@ import {
   getProductsByFilter,
   getProductsBySubCategory,
 } from '../controllers/productController.js';
+import { getProductReviews, getReviewEligibility, createProductReview, getRelatedProducts } from '../controllers/reviewController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 
@@ -28,6 +29,9 @@ router.get('/sale', getSaleProducts);
 router.get('/category/:categoryName', getProductsByCategory);
 router.get('/subcategory/:subCategoryName', getProductsBySubCategory);
 router.get('/filter/:category/:subCategory', getProductsByFilter);
+router.get('/:id/related', getRelatedProducts);
+router.get('/:id/reviews/eligibility', protect, getReviewEligibility);
+router.route('/:id/reviews').get(getProductReviews).post(protect, createProductReview);
 router.route('/:id').get(getProductById);
 
 router.route('/').post(protect, admin, upload.array('gallery', 6), createProduct);

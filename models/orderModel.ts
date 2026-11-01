@@ -8,6 +8,7 @@ const orderSchema = new mongoose.Schema({
       qty: { type: Number, required: true },
       image: { type: String, required: true },
       price: { type: Number, required: true },
+      originalPrice: { type: Number }, // Regular price when bought on sale
       size: { type: String, required: true },
       product: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Product' },
     },

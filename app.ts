@@ -60,6 +60,6 @@ export function createApp() {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
   const projectDir = path.basename(moduleDir) === 'dist' ? path.dirname(moduleDir) : moduleDir;
   app.use('/uploads', express.static(path.join(projectDir, 'backend', 'uploads')));
-  app.get('/', (_req, res) => res.send('AG-Store API is running...'));
+  app.get('/', (_req, res) => res.send('Sbrfashion API is running...'));
   return app;
 }

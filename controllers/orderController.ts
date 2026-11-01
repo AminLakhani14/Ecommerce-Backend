@@ -45,11 +45,12 @@ const addOrderItems: RequestHandler<Record<string, string>> = async (req, res) =
     const order = new Order({
       user: req.user!._id,
       // This map ONLY selects the fields needed for the order schema.
-      orderItems: orderItems.map((item: { name: string; qty: number; image: string; price: number; size: string; _id: string }) => ({
+      orderItems: orderItems.map((item: { name: string; qty: number; image: string; price: number; originalPrice?: number; size: string; _id: string }) => ({
         name: item.name,
         qty: item.qty,
         image: item.image,
         price: item.price,
+        originalPrice: Number(item.originalPrice) > item.price ? Number(item.originalPrice) : undefined,
         size: item.size, // The 'size' is explicitly passed.
         product: item._id,
       })),
@@ -124,7 +125,7 @@ const addOrderItems: RequestHandler<Record<string, string>> = async (req, res) =
 
     await sendEmail({
       email: shippingAddress.email,
-      subject: `Your AG-Store Order Confirmation #${createdOrder._id}`,
+      subject: `Your Sbrfashion Order Confirmation #${createdOrder._id}`,
       html: emailHtml,
     });
 

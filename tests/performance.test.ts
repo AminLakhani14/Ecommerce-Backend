@@ -123,7 +123,7 @@ test('product reads use equality and collation, support pagination, gzip, ETags,
     const fresh = await fetch(url); assert.equal(fresh.headers.get('x-cache'), 'MISS');
     assert.equal(reads, 2);
     for (const query of ['limit=0', 'limit=101', 'page=-1', 'page=abc']) assert.equal((await fetch(`${base}?${query}`)).status, 400);
-    assert.equal((await fetch(`${base}/bad-id`)).status, 400);
+    assert.equal((await fetch(`${base}/admin/bad-id`)).status, 400);
   } finally { await new Promise<void>(resolve => server.close(() => resolve())); }
 });
 

@@ -1,7 +1,7 @@
 // Catalog imagery: DummyJSON product CDN and Unsplash, stored as remote URLs.
 export interface CollectionProduct {
   name: string; category: 'Accessories' | 'Backpacks' | 'Clothing'; subCategory: string;
-  price: number; description: string; countInStock: number; isOnSale: boolean; isActive: boolean;
+  price: number; salePrice?: number; description: string; countInStock: number; isOnSale: boolean; isActive: boolean;
   variants: Array<{ size: string; stock: number }>; image: string; gallery: string[]; createdAt: string; updatedAt: string;
 }
 
@@ -11,6 +11,7 @@ const products = [
     "category": "Accessories",
     "subCategory": "Sunglasses",
     "price": 1499,
+    "salePrice": 1199,
     "description": "Complete your everyday look with the black frame sunglasses. A versatile finishing touch for casual outfits and dressed-up days.",
     "countInStock": 12,
     "isOnSale": true,
@@ -126,6 +127,7 @@ const products = [
     "category": "Accessories",
     "subCategory": "Watches",
     "price": 4499,
+    "salePrice": 3599,
     "description": "Complete your everyday look with the leather strap watch. A versatile finishing touch for casual outfits and dressed-up days.",
     "countInStock": 12,
     "isOnSale": true,
@@ -241,6 +243,7 @@ const products = [
     "category": "Backpacks",
     "subCategory": "Backpacks",
     "price": 2499,
+    "salePrice": 1999,
     "description": "Everyday Commuter Backpack is a practical companion for everyday plans, commuting, and days out. Discover a fresh addition to your daily carry.",
     "countInStock": 12,
     "isOnSale": true,
@@ -341,6 +344,7 @@ const products = [
     "category": "Backpacks",
     "subCategory": "Backpacks",
     "price": 3999,
+    "salePrice": 3199,
     "description": "Urban Essentials Backpack is a practical companion for everyday plans, commuting, and days out. Discover a fresh addition to your daily carry.",
     "countInStock": 12,
     "isOnSale": true,
@@ -441,6 +445,7 @@ const products = [
     "category": "Clothing",
     "subCategory": "Shirts",
     "price": 1999,
+    "salePrice": 1599,
     "description": "Blue Check Shirt brings an easy-to-style look to your wardrobe. Pair with your favorite everyday accessories and choose your fit from the available sizes.",
     "countInStock": 20,
     "isOnSale": true,
@@ -621,6 +626,7 @@ const products = [
     "category": "Clothing",
     "subCategory": "Dresses",
     "price": 3499,
+    "salePrice": 2799,
     "description": "Evening Black Gown brings an easy-to-style look to your wardrobe. Pair with your favorite everyday accessories and choose your fit from the available sizes.",
     "countInStock": 20,
     "isOnSale": true,
