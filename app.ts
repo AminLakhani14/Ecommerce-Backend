@@ -19,6 +19,9 @@ export function createApp() {
   const allowedOrigins = [
     'http://localhost:3000',
     'https://agclothingstore.netlify.app',
+    'https://sbrfashion.com',
+    'https://www.sbrfashion.com',
+    'https://sbrfashion.vercel.app',
     ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
   ];
   app.use(cors({
